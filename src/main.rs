@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 mod game;
+mod input;
 mod terminalguard;
 
 fn main() -> std::io::Result<()> {

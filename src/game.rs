@@ -1,58 +1,49 @@
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
-    event::{Event, KeyCode, read},
+    event::KeyCode,
     style::Print,
     terminal::{Clear, ClearType},
 };
 use std::io::{self, Write};
+use crate::input::InputState;
 
-pub struct Game {}
+pub struct Game {
+    input: InputState,
+}
 
 impl Game {
     pub fn new() -> Self {
-        Game {}
+        Game {
+            input: InputState::new()
+        }
     }
 
     pub fn run(&mut self) -> io::Result<()> {
-        let mut stdout = io::stdout();
-
-        let mut x = 0;
-        let mut y = 0;
+        self.draw()?;
 
         loop {
-            // draw
-            stdout.queue(Clear(ClearType::All))?;
-            stdout.queue(MoveTo(x, y))?;
-            stdout.queue(Print('@'))?;
-            stdout.flush()?;
-
             // input
-            match read()? {
-                Event::Key(key_event) => {
-                    match key_event.code {
-                        KeyCode::Esc => break,
+            self.input.update()?;
 
-                        KeyCode::Left => {
-                            if x > 0 {
-                                x -= 1
-                            }
-                        }
-                        KeyCode::Right => x += 1,
-                        KeyCode::Up => {
-                            if y > 0 {
-                                y -= 1
-                            }
-                        }
-                        KeyCode::Down => y += 1,
-
-                        _ => {}
-                    };
-                }
-                _ => {}
+            // update
+            if self.input.last_key() == KeyCode::Esc {
+                break
             }
+
+            // draw
+            self.draw()?;
         }
 
+        Ok(())
+    }
+
+    fn draw(&self) -> std::io::Result<()> {
+        let mut stdout = io::stdout();
+        stdout.queue(Clear(ClearType::All))?;
+        stdout.queue(MoveTo(0, 0))?;
+        stdout.queue(Print('@'))?;
+        stdout.flush()?;
         Ok(())
     }
 }
