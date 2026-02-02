@@ -20,7 +20,7 @@ impl InputState {
         Ok(())
     }
 
-    pub fn last_key(&self) -> KeyCode {
-        self.last_key
+    pub fn is_pressed(&self, key: KeyCode) -> bool {
+        self.last_key == key
     }
 }

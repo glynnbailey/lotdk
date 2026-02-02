@@ -13,7 +13,7 @@ pub struct Playing;
 
 impl Playing {
     pub fn update(self, game_data: &mut GameData) -> GameState {
-        if game_data.input.last_key() == KeyCode::Esc {
+        if game_data.input.is_pressed(KeyCode::Esc) {
             return GameState::MainMenu(MainMenu::new());
         }
 

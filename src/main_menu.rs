@@ -21,26 +21,24 @@ impl MainMenu {
     }
 
     pub fn update(mut self, game_data: &mut GameData) -> GameState {
-        match game_data.input.last_key() {
-            KeyCode::Char('w') | KeyCode::Up => {
-                self.cursor = if self.cursor > 0 { self.cursor - 1 } else { (MENU_ITEMS.len() - 1) as u8 };
-            }
+        if game_data.input.is_pressed(KeyCode::Char('w')) || game_data.input.is_pressed(KeyCode::Up) {
+            self.cursor = if self.cursor > 0 { self.cursor - 1 } else { (MENU_ITEMS.len() - 1) as u8 };
+        }
 
-            KeyCode::Char('s') | KeyCode::Down => {
-                self.cursor = if (self.cursor as usize) < MENU_ITEMS.len() - 1 { self.cursor + 1 } else { 0 };
-            }
+        if game_data.input.is_pressed(KeyCode::Char('s')) || game_data.input.is_pressed(KeyCode::Down) {
+            self.cursor = if (self.cursor as usize) < MENU_ITEMS.len() - 1 { self.cursor + 1 } else { 0 };
+        }
 
-            KeyCode::Enter => match self.cursor {
+        if game_data.input.is_pressed(KeyCode::Enter) {
+            match self.cursor {
                 0 => return GameState::Playing(Playing),
                 1 => return GameState::Quit,
                 _ => {}
-            },
-
-            KeyCode::Esc => {
-                return GameState::Quit;
             }
+        }
 
-            _ => {}
+        if game_data.input.is_pressed(KeyCode::Esc) {
+            return GameState::Quit;
         }
 
         GameState::MainMenu(self)
