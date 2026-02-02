@@ -1,4 +1,4 @@
-use crossterm::event::KeyCode;
+use crossterm::event::{self, Event, KeyCode};
 
 pub struct InputState {
     last_key: KeyCode,
@@ -10,8 +10,8 @@ impl InputState {
     }
 
     pub fn update(&mut self) -> std::io::Result<()> {
-        match crossterm::event::read()? {
-            crossterm::event::Event::Key(key_event) => {
+        match event::read()? {
+            Event::Key(key_event) => {
                 self.last_key = key_event.code;
             }
             _ => {}

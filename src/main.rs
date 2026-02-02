@@ -43,7 +43,7 @@ impl GameData {
 fn main() -> std::io::Result<()> {
     let _term = terminalguard::TerminalGuard::new()?;
     let mut game_data = GameData::new();
-    let mut game_state = GameState::MainMenu(main_menu::MainMenu);
+    let mut game_state = GameState::MainMenu(main_menu::MainMenu::new());
 
     loop {
         // draw

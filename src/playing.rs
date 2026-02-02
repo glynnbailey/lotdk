@@ -12,12 +12,12 @@ use std::io::Write;
 pub struct Playing;
 
 impl Playing {
-    pub fn update(&self, game_data: &mut GameData) -> GameState {
+    pub fn update(self, game_data: &mut GameData) -> GameState {
         if game_data.input.last_key() == KeyCode::Esc {
-            return GameState::MainMenu(MainMenu);
+            return GameState::MainMenu(MainMenu::new());
         }
 
-        GameState::Playing(Playing)
+        GameState::Playing(self)
     }
 
     pub fn draw(&self, game_data: &GameData) -> std::io::Result<()> {
