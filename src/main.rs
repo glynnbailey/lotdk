@@ -1,9 +1,12 @@
 #![allow(dead_code, unused)]
 
 mod input;
+mod main_menu;
+mod playing;
 mod terminalguard;
 
-use std::io::Write;
+pub use main_menu::MainMenu;
+pub use playing::Playing;
 
 use crate::input::InputState;
 use crossterm::{
@@ -13,58 +16,17 @@ use crossterm::{
     style::Print,
     terminal::{Clear, ClearType},
 };
+use std::io::Write;
 
-enum GameState {
-    MainMenu(MainMenu),
-    Playing(Playing),
+pub enum GameState {
+    MainMenu(main_menu::MainMenu),
+    Playing(playing::Playing),
     Quit,
 }
 
-#[derive(Clone, Copy)]
-struct MainMenu;
-
-impl MainMenu {
-    pub fn update(&self, game_data: &mut GameData) -> GameState {
-        if game_data.input.last_key() == KeyCode::Enter {
-            return GameState::Playing(Playing);
-        }
-
-        if game_data.input.last_key() == KeyCode::Esc {
-            return GameState::Quit;
-        }
-
-        GameState::MainMenu(MainMenu)
-    }
-
-    pub fn draw(&self, game_data: &GameData) -> std::io::Result<()> {
-        let mut stdout = std::io::stdout();
-        stdout.queue(Clear(ClearType::All))?;
-        stdout.queue(MoveTo(0, 0))?;
-        stdout.queue(Print("Main Menu"))?;
-        stdout.flush()?;
-        Ok(())
-    }
-}
-
-#[derive(Clone, Copy)]
-struct Playing;
-
-impl Playing {
-    pub fn update(&self, game_data: &mut GameData) -> GameState {
-        if game_data.input.last_key() == KeyCode::Esc {
-            return GameState::MainMenu(MainMenu);
-        }
-
-        GameState::Playing(Playing)
-    }
-
-    pub fn draw(&self, game_data: &GameData) -> std::io::Result<()> {
-        let mut stdout = std::io::stdout();
-        stdout.queue(Clear(ClearType::All))?;
-        stdout.queue(MoveTo(0, 0))?;
-        stdout.queue(Print("Playing"))?;
-        stdout.flush()?;
-        Ok(())
+impl Default for GameState {
+    fn default() -> Self {
+        GameState::Quit
     }
 }
 
@@ -81,7 +43,7 @@ impl GameData {
 fn main() -> std::io::Result<()> {
     let _term = terminalguard::TerminalGuard::new()?;
     let mut game_data = GameData::new();
-    let mut game_state = GameState::MainMenu(MainMenu);
+    let mut game_state = GameState::MainMenu(main_menu::MainMenu);
 
     loop {
         // draw
@@ -96,9 +58,9 @@ fn main() -> std::io::Result<()> {
 
         // update
         game_state = match game_state {
-            GameState::MainMenu(ref main_menu) => main_menu.update(&mut game_data),
-            GameState::Playing(ref playing) => playing.update(&mut game_data),
-            GameState::Quit => break,
+            GameState::MainMenu(main_menu) => main_menu.update(&mut game_data),
+            GameState::Playing(playing) => playing.update(&mut game_data),
+            GameState::Quit => GameState::Quit,
         };
     }
 
