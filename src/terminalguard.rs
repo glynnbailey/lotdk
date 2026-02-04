@@ -14,6 +14,7 @@ impl TerminalGuard {
         panic::set_hook(Box::new(move |panic_info| {
             Self::cleanup();
             original_hook(panic_info);
+            let _ = std::io::stderr().flush();
         }));
 
         enable_raw_mode()?;

@@ -1,4 +1,4 @@
-use crate::{GameData, GameState, input::InputState, playing::Playing};
+use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, input::InputState, map_manager::MapManager, playing::Playing, position::Position};
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
@@ -21,24 +21,33 @@ impl MainMenu {
     }
 
     pub fn update(mut self, game_data: &mut GameData) -> GameState {
-        if game_data.input.is_pressed(KeyCode::Char('w')) || game_data.input.is_pressed(KeyCode::Up) {
-            self.cursor = if self.cursor > 0 { self.cursor - 1 } else { (MENU_ITEMS.len() - 1) as u8 };
-        }
+        match game_data.input.last_key() {
+            KeyCode::Char('w') | KeyCode::Up => {
+                self.cursor = if self.cursor > 0 { self.cursor - 1 } else { (MENU_ITEMS.len() - 1) as u8 };
+            }
+            KeyCode::Char('s') | KeyCode::Down => {
+                self.cursor = if (self.cursor as usize) < MENU_ITEMS.len() - 1 { self.cursor + 1 } else { 0 };
+            }
+            KeyCode::Enter => match self.cursor {
+                0 => {
+                    // setup new game
+                    game_data.actors = ActorManager::new();
+                    game_data.map = MapManager::new();
+                    game_data.map.build_floor();
 
-        if game_data.input.is_pressed(KeyCode::Char('s')) || game_data.input.is_pressed(KeyCode::Down) {
-            self.cursor = if (self.cursor as usize) < MENU_ITEMS.len() - 1 { self.cursor + 1 } else { 0 };
-        }
+                    let player_position = Position { x: 10, y: 10 };
+                    let player_actor = Actor::new(player_position);
+                    let actor_id = game_data.actors.add_actor(player_actor);
+                    game_data.map.set_actor(player_position, actor_id);
+                    game_data.map.update_visibility(player_position);
 
-        if game_data.input.is_pressed(KeyCode::Enter) {
-            match self.cursor {
-                0 => return GameState::Playing(Playing),
+                    return GameState::Playing(Playing);
+                }
                 1 => return GameState::Quit,
                 _ => {}
-            }
-        }
-
-        if game_data.input.is_pressed(KeyCode::Esc) {
-            return GameState::Quit;
+            },
+            KeyCode::Esc => return GameState::Quit,
+            _ => {}
         }
 
         GameState::MainMenu(self)

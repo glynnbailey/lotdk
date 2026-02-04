@@ -1,14 +1,16 @@
 #![allow(dead_code, unused)]
 
+mod actor;
+mod actor_manager;
+mod consts;
 mod input;
 mod main_menu;
+mod map_manager;
 mod playing;
+mod position;
+mod shadowcast;
 mod terminalguard;
 
-pub use main_menu::MainMenu;
-pub use playing::Playing;
-
-use crate::input::InputState;
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
@@ -31,12 +33,18 @@ impl Default for GameState {
 }
 
 pub struct GameData {
-    pub input: InputState,
+    pub input: input::InputState,
+    pub actors: actor_manager::ActorManager,
+    pub map: map_manager::MapManager,
 }
 
 impl GameData {
     pub fn new() -> Self {
-        GameData { input: InputState::new() }
+        GameData {
+            input: input::InputState::new(),
+            actors: actor_manager::ActorManager::new(),
+            map: map_manager::MapManager::new(),
+        }
     }
 }
 

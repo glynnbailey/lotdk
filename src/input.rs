@@ -10,17 +10,18 @@ impl InputState {
     }
 
     pub fn update(&mut self) -> std::io::Result<()> {
-        match event::read()? {
-            Event::Key(key_event) => {
-                self.last_key = key_event.code;
+        loop {
+            match event::read()? {
+                Event::Key(key_event) => {
+                    self.last_key = key_event.code;
+                    return Ok(());
+                }
+                _ => continue, // ignore mouse/resize/etc
             }
-            _ => {}
         }
-
-        Ok(())
     }
 
-    pub fn is_pressed(&self, key: KeyCode) -> bool {
-        self.last_key == key
+    pub fn last_key(&self) -> KeyCode {
+        self.last_key
     }
 }
