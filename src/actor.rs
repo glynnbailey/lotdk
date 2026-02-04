@@ -17,6 +17,11 @@ impl Actor {
         self.position = position;
     }
 
+    pub fn speed(&self) -> u32 {
+        // TODO base on actor type/stats
+        100
+    }
+
     pub fn glyph(&self) -> char {
         '@'
     }

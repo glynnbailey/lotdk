@@ -43,9 +43,30 @@ impl Playing {
         }
     }
 
-    fn run_ai_turns(&self, game_data: &mut GameData) {}
+    fn run_ai_turns(&self, game_data: &mut GameData) {
+        loop {
+            let actor_id = game_data.actors.next_turn().unwrap();
+            if actor_id == 0 {
+                return;
+            }
+
+            // dummy ai turn: wait
+            self.process_action(actor_id, Action::Wait, game_data);
+
+            // TODO implement AI logic
+            // let actor = game_data.actors.get_actor(actor_id).unwrap();
+            // let (actor_state, action) = actor.ai_turn(actor_id, &game_data.actors, &game_data.map);
+            // game_data.actors.get_actor_mut(actor_id).unwrap().set_state(actor_state);
+            // self.process_action(actor_id, action, game_data);
+        }
+    }
 
     fn process_action(&self, actor_id: usize, action: Action, game_data: &mut GameData) {
+        let actor_speed = game_data.actors.get_actor(actor_id).unwrap().speed();
+        let speed_modifier = (10000 / actor_speed).max(10);
+        let cost = (action.cost() * speed_modifier) / 100;
+        game_data.actors.end_turn(cost);
+
         match action {
             Action::Wait => {
                 // Do nothing

@@ -13,7 +13,7 @@ impl ActorManager {
         Self {
             actors: HashMap::new(),
             turn_queue: BinaryHeap::new(),
-            current_turn: None,
+            current_turn: Some(ActorTurn { actor_id: 0, action_points: 0 }), // start the game on the players turn with 0 action points spent
             next_id: 0,
         }
     }

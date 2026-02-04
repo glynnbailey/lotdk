@@ -39,6 +39,7 @@ impl MainMenu {
                     let player_actor = Actor::new(player_position);
                     let actor_id = game_data.actors.add_actor(player_actor);
                     game_data.map.set_actor(player_position, actor_id);
+
                     game_data.map.update_visibility(player_position);
 
                     return GameState::Playing(Playing);
