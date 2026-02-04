@@ -1,6 +1,6 @@
 use crate::{map_manager::MapManager, position::Position};
 
-const VISION_RADIUS: i64 = 20;
+const VISION_RADIUS: i64 = 50;
 
 #[derive(Clone, Copy)]
 enum Direction {

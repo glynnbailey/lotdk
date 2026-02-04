@@ -3,7 +3,7 @@ use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
     event::KeyCode,
-    style::Print,
+    style::{Print, PrintStyledContent, StyledContent, Stylize, style},
     terminal::{Clear, ClearType},
 };
 use std::io::Write;
@@ -69,10 +69,39 @@ impl Playing {
 
     pub fn draw(&self, game_data: &GameData) -> std::io::Result<()> {
         let mut stdout = std::io::stdout();
-        stdout.queue(Clear(ClearType::All))?;
+        // stdout.queue(Clear(ClearType::All))?;
+
         let player_position = game_data.actors.get_player_actor().position();
-        stdout.queue(MoveTo(player_position.x as u16, player_position.y as u16))?;
-        stdout.queue(Print('@'))?;
+        let (width, height) = crossterm::terminal::size()?;
+
+        for y in 0..height {
+            for x in 0..width {
+                let map_x = player_position.x + x as i64 - (width / 2) as i64;
+                let map_y = player_position.y + y as i64 - (height / 2) as i64;
+
+                if let Some(tile) = game_data.map.get_tile(Position { x: map_x as i64, y: map_y as i64 }) {
+                    // Draw actor if present
+                    if let Some(actor_id) = tile.actor_id() {
+                        if let Some(actor) = game_data.actors.get_actor(actor_id) {
+                            let ch = actor.glyph();
+                            stdout.queue(MoveTo(x, y))?;
+                            stdout.queue(Print(ch))?;
+                            continue;
+                        }
+                    }
+
+                    // Draw tile
+                    let (ch, color) = tile.glyph();
+                    stdout.queue(MoveTo(x, y))?;
+                    stdout.queue(PrintStyledContent(style(ch).with(color)))?;
+                } else {
+                    // draw empty space for out-of-bounds
+                    stdout.queue(MoveTo(x, y))?;
+                    stdout.queue(Print(' '))?;
+                }
+            }
+        }
+
         stdout.flush()?;
         Ok(())
     }

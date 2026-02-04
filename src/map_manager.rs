@@ -1,3 +1,5 @@
+use crossterm::style::Color;
+
 use crate::{actor_manager::ActorManager, consts::DUNGEON_SIZE, consts::*, position::Position};
 
 pub struct MapManager {
@@ -21,6 +23,14 @@ impl MapManager {
         for _ in 0..(DUNGEON_SIZE * DUNGEON_SIZE) {
             self.tiles.push(Tile::new(TileType::Floor));
         }
+
+        self.tiles[5 * DUNGEON_SIZE + 5] = Tile::new(TileType::Wall);
+        self.tiles[5 * DUNGEON_SIZE + 6] = Tile::new(TileType::Wall);
+        self.tiles[5 * DUNGEON_SIZE + 7] = Tile::new(TileType::ClosedDoor);
+        self.tiles[5 * DUNGEON_SIZE + 8] = Tile::new(TileType::Wall);
+        self.tiles[5 * DUNGEON_SIZE + 9] = Tile::new(TileType::OpenDoor);
+        self.tiles[5 * DUNGEON_SIZE + 10] = Tile::new(TileType::Wall);
+        self.tiles[5 * DUNGEON_SIZE + 11] = Tile::new(TileType::Wall);
     }
 
     pub fn get_tile(&self, position: Position) -> Option<&Tile> {
@@ -114,12 +124,21 @@ impl Tile {
         self.actor_id
     }
 
-    fn sprite(&self) -> (u8, u8) {
-        match self.tile_type {
-            TileType::Floor => (0, 5),
-            TileType::Wall => (1, 5),
-            TileType::ClosedDoor => (2, 5),
-            TileType::OpenDoor => (3, 5),
+    pub fn glyph(&self) -> (char, Color) {
+        match self.visibility {
+            Visibility::Hidden => (' ', Color::Black),
+            Visibility::Visible => match self.tile_type {
+                TileType::Floor => ('.', Color::Grey),
+                TileType::Wall => ('#', Color::Grey),
+                TileType::ClosedDoor => ('+', Color::Yellow),
+                TileType::OpenDoor => ('-', Color::Yellow),
+            },
+            Visibility::Explored => match self.tile_type {
+                TileType::Floor => ('.', Color::DarkGrey),
+                TileType::Wall => ('#', Color::DarkGrey),
+                TileType::ClosedDoor => ('+', Color::DarkYellow),
+                TileType::OpenDoor => ('-', Color::DarkYellow),
+            },
         }
     }
 

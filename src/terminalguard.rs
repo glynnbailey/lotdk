@@ -13,8 +13,8 @@ impl TerminalGuard {
         let original_hook = panic::take_hook();
         panic::set_hook(Box::new(move |panic_info| {
             Self::cleanup();
-            original_hook(panic_info);
-            let _ = std::io::stderr().flush();
+            eprintln!("{}", panic_info);
+            std::process::exit(101);
         }));
 
         enable_raw_mode()?;
@@ -23,10 +23,10 @@ impl TerminalGuard {
     }
 
     fn cleanup() {
+        let mut stdout = std::io::stdout();
         let _ = disable_raw_mode();
-        let _ = execute!(std::io::stdout(), LeaveAlternateScreen, Show);
-        let _ = std::io::stdout().flush();
-        let _ = std::io::stderr().flush();
+        let _ = execute!(stdout, LeaveAlternateScreen, Show);
+        let _ = stdout.flush();
     }
 }
 

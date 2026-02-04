@@ -16,4 +16,8 @@ impl Actor {
     pub fn set_position(&mut self, position: Position) {
         self.position = position;
     }
+
+    pub fn glyph(&self) -> char {
+        '@'
+    }
 }
