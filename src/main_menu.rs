@@ -10,6 +10,13 @@ use std::io::Write;
 
 const MENU_ITEMS: [&str; 2] = ["Start Game", "Quit"];
 
+const TITLE: [&str; 4] = [
+    "▗▄▄▄ ▗▄▄▄▖▗▖  ▗▖ ▗▄▖ ▗▖  ▗▖    ▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖",
+    "▐▌  █▐▌   ▐▛▚▞▜▌▐▌ ▐▌▐▛▚▖▐▌    ▐▌▗▞▘  █  ▐▛▚▖▐▌▐▌   ",
+    "▐▌  █▐▛▀▀▘▐▌  ▐▌▐▌ ▐▌▐▌ ▝▜▌    ▐▛▚▖   █  ▐▌ ▝▜▌▐▌▝▜▌",
+    "▐▙▄▄▀▐▙▄▄▖▐▌  ▐▌▝▚▄▞▘▐▌  ▐▌    ▐▌ ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘",
+];
+
 #[derive(Clone, Copy)]
 pub struct MainMenu {
     cursor: u8,
@@ -59,15 +66,19 @@ impl MainMenu {
         stdout.queue(Clear(ClearType::All))?;
 
         stdout.queue(MoveTo(0, 0))?;
-        stdout.queue(PrintStyledContent(style("Lair of the Daemon King").with(Color::Magenta).attribute(Attribute::Bold)))?;
+        stdout.queue(PrintStyledContent(style("Lair of the").with(Color::Magenta).attribute(Attribute::Bold)))?;
+        for (i, line) in TITLE.iter().enumerate() {
+            stdout.queue(MoveTo(0, 1 + i as u16))?;
+            stdout.queue(PrintStyledContent(style(*line).with(Color::Red).attribute(Attribute::Bold)))?;
+        }
 
-        stdout.queue(MoveTo(0, 3))?;
+        stdout.queue(MoveTo(0, 7))?;
         stdout.queue(Print("Main Menu"))?;
 
         for (i, item) in MENU_ITEMS.iter().enumerate() {
-            stdout.queue(MoveTo(0, 5 + i as u16))?;
+            stdout.queue(MoveTo(0, 9 + i as u16))?;
             if i as u8 == self.cursor {
-                stdout.queue(PrintStyledContent(style(item).with(Color::Yellow)))?;
+                stdout.queue(PrintStyledContent(style(item).with(Color::Red)))?;
             } else {
                 stdout.queue(Print(format!("{}", item)))?;
             }
