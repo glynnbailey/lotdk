@@ -10,6 +10,7 @@ mod playing;
 mod position;
 mod shadowcast;
 mod terminalguard;
+mod debug;
 
 use crossterm::{
     QueueableCommand,
