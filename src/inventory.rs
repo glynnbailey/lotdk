@@ -1,4 +1,4 @@
-use crate::game_assets::{ArmorSlot, ItemKind, ItemType};
+use crate::assets::{ArmorSlot, ItemKind, ItemType};
 
 #[derive(Clone)]
 pub struct InventoryItem {

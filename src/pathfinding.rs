@@ -62,7 +62,7 @@ pub fn a_star(actors: &ActorManager, map: &MapManager, start: Position, goal: Po
         closed_set.insert(current.position.clone());
 
         // if the goal is found build and return the path
-        if current.position == *goal {
+        if current.position == goal {
             let mut current_position = current.position;
             let mut path = Vec::new();
 
@@ -81,14 +81,14 @@ pub fn a_star(actors: &ActorManager, map: &MapManager, start: Position, goal: Po
             }
 
             // check for obstacles
-            if let Some(other_actor_id) = map.get_tile(&neighbour).unwrap().actor_id() {
+            if let Some(other_actor_id) = map.get_tile(neighbour).unwrap().actor_id() {
                 if other_actor_id != actor_id && actors.get_actor(actor_id).unwrap().is_friendly_towards(&actors.get_actor(other_actor_id).unwrap()) {
                     continue;
                 }
             }
 
             // calculate the g score, which is the score to get from the start to this tile
-            let tentative_g_score = g_scores.get(&current.position).unwrap() + (map.get_tile(&neighbour).unwrap().movement_cost() as f32 * movement_cost_multiplier);
+            let tentative_g_score = g_scores.get(&current.position).unwrap() + (map.get_tile(neighbour).unwrap().movement_cost() as f32 * movement_cost_multiplier);
 
             // if the g score is better or doesnt exist (we have never checked this path before or this path is better than the previous ones) add it
             if tentative_g_score < *g_scores.get(&neighbour).unwrap_or(&f32::MAX) {
@@ -105,7 +105,7 @@ pub fn a_star(actors: &ActorManager, map: &MapManager, start: Position, goal: Po
                     let cross = (dx1 * dy2 - dx2 * dy1).abs() as f32;
                     let tie_breaker = cross * 0.001; // Small bias
 
-                    let f_score = tentative_g_score + neighbour.octile_distance(&goal) + tie_breaker;
+                    let f_score = tentative_g_score + neighbour.octile_distance(goal) + tie_breaker;
                     open_set.push(Node { position: neighbour.clone(), f_score });
                     open_positions.insert(neighbour);
                 }

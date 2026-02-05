@@ -36,7 +36,7 @@ impl MainMenu {
                     game_data.map.build_floor();
 
                     let player_position = Position { x: 10, y: 10 };
-                    let player_actor = Actor::new(player_position);
+                    let player_actor = Actor::new("human".to_string(), Some("Player".to_string()), None, player_position);
                     let actor_id = game_data.actors.add_actor(player_actor);
                     game_data.map.set_actor(player_position, actor_id);
 

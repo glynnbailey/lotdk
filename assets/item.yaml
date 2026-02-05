@@ -1,0 +1,27 @@
+---
+
+- kind: item
+  id: "iron_sword"
+  name: "Iron Sword"
+  description: "A sturdy iron blade"
+  item_type: weapon
+  damage: 10
+  weapon_type: sword
+
+- kind: item
+  id: "healing_potion"
+  name: "Healing Potion"
+  description: "Restores health when consumed"
+  item_type: consumable
+  effect:
+    heal:
+      amount: 50
+  uses: 1
+
+- kind: item
+  id: "leather_helmet"
+  name: "Leather Helmet"
+  description: "Basic head protection"
+  item_type: armor
+  defense: 2
+  slot: head

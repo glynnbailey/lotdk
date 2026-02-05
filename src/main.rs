@@ -2,15 +2,18 @@
 
 mod actor;
 mod actor_manager;
+mod assets;
 mod consts;
+mod debug;
 mod input;
+mod inventory;
 mod main_menu;
 mod map_manager;
+mod pathfinding;
 mod playing;
 mod position;
 mod shadowcast;
 mod terminalguard;
-mod debug;
 
 use crossterm::{
     QueueableCommand,

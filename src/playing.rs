@@ -104,9 +104,9 @@ impl Playing {
                     // Draw actor if present
                     if let Some(actor_id) = tile.actor_id() {
                         if let Some(actor) = game_data.actors.get_actor(actor_id) {
-                            let ch = actor.glyph();
+                            let (ch, color) = actor.glyph();
                             stdout.queue(MoveTo(x, y))?;
-                            stdout.queue(Print(ch))?;
+                            stdout.queue(PrintStyledContent(style(ch).with(color)))?;
                             continue;
                         }
                     }

@@ -1,0 +1,20 @@
+---
+
+- kind: actor
+  id: human
+  name: Human
+  glyph: '@'
+  color: white
+  sprite: [0, 0]
+  faction: human
+  base_health: 100
+  base_speed: 100
+
+- kind: actor
+  id: goblin
+  name: Goblin
+  glyph: 'g'
+  color: green
+  faction: goblin
+  base_health: 20
+  base_speed: 80
