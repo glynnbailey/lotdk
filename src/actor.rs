@@ -20,11 +20,11 @@ pub struct Actor {
     inventory: Inventory,
     equipment: Equipment,
 
-    state: ActorState,
+    ai_state: ActorAiState,
 }
 
 #[derive(Debug, Clone)]
-pub enum ActorState {
+pub enum ActorAiState {
     Idle,
     TargetingActor(usize),
     InvestigatingPosition(Position),
@@ -42,7 +42,7 @@ impl Actor {
             health: kind.base_health,
             inventory: Inventory::new(),
             equipment: Equipment::new(),
-            state: ActorState::Idle,
+            ai_state: ActorAiState::Idle,
         }
     }
 
@@ -73,8 +73,8 @@ impl Actor {
         self.position = position;
     }
 
-    pub fn set_state(&mut self, state: ActorState) {
-        self.state = state;
+    pub fn set_state(&mut self, state: ActorAiState) {
+        self.ai_state = state;
     }
 
     pub fn melee_attack_roll(&self) -> i32 {
@@ -238,13 +238,13 @@ impl Actor {
         1
     }
 
-    pub fn ai_turn(&self, actor_id: usize, actors: &ActorManager, map: &MapManager) -> (ActorState, Action) {
-        let mut current_state = self.state.clone();
+    pub fn ai_turn(&self, actor_id: usize, actors: &ActorManager, map: &MapManager) -> (ActorAiState, Action) {
+        let mut current_state = self.ai_state.clone();
         let visible_tiles = map.shadowcast(self.position);
 
         loop {
             match &current_state {
-                ActorState::Idle => {
+                ActorAiState::Idle => {
                     // try to find a target
                     let mut possible_targets = Vec::new();
                     for visible_position in &visible_tiles {
@@ -263,20 +263,20 @@ impl Actor {
                     if !possible_targets.is_empty() {
                         possible_targets.shuffle(&mut rand::rng());
                         let target_actor_id = possible_targets.pop().unwrap();
-                        current_state = ActorState::TargetingActor(target_actor_id);
+                        current_state = ActorAiState::TargetingActor(target_actor_id);
                         continue;
                     }
 
                     // no target found, remain idle
-                    return (ActorState::Idle, Action::Wait);
+                    return (ActorAiState::Idle, Action::Wait);
                 }
 
-                ActorState::TargetingActor(other_actor_id) => {
+                ActorAiState::TargetingActor(other_actor_id) => {
                     let target_actor = match actors.get_actor(*other_actor_id) {
                         Some(actor) => actor,
                         None => {
                             // target no longer exists, probably died, go idle
-                            current_state = ActorState::Idle;
+                            current_state = ActorAiState::Idle;
                             continue;
                         }
                     };
@@ -285,29 +285,29 @@ impl Actor {
                     if !visible_tiles.contains(&target_actor.position()) {
                         // lost sight of target, investigate last known position
                         let target_position = target_actor.position().clone();
-                        current_state = ActorState::InvestigatingPosition(target_position);
+                        current_state = ActorAiState::InvestigatingPosition(target_position);
                         continue;
                     }
 
                     if self.position.is_adjacent(target_actor.position) {
                         // attack target
-                        return (ActorState::TargetingActor(*other_actor_id), Action::MeleeAttack(*other_actor_id));
+                        return (ActorAiState::TargetingActor(*other_actor_id), Action::MeleeAttack(*other_actor_id));
                     } else {
                         // move towards target
                         let path = a_star(actors, map, self.position, target_actor.position(), actor_id);
                         if let Some(path) = path {
                             if !path.is_empty() {
                                 let next_position = path[0].clone();
-                                return (ActorState::TargetingActor(*other_actor_id), Action::MoveTo(next_position));
+                                return (ActorAiState::TargetingActor(*other_actor_id), Action::MoveTo(next_position));
                             }
                         }
 
                         // cannot path to target, go idle
-                        return (ActorState::Idle, Action::Wait);
+                        return (ActorAiState::Idle, Action::Wait);
                     }
                 }
 
-                ActorState::InvestigatingPosition(target_position) => {
+                ActorAiState::InvestigatingPosition(target_position) => {
                     // check if any targets can be seen from this position
                     let mut possible_targets = Vec::new();
                     for visible_position in &visible_tiles {
@@ -325,13 +325,13 @@ impl Actor {
                     if !possible_targets.is_empty() {
                         possible_targets.shuffle(&mut rand::rng());
                         let target_actor_id = possible_targets.pop().unwrap();
-                        current_state = ActorState::TargetingActor(target_actor_id);
+                        current_state = ActorAiState::TargetingActor(target_actor_id);
                         continue;
                     }
 
                     // check if reached investigation position
                     if &self.position == target_position {
-                        return (ActorState::Idle, Action::Wait);
+                        return (ActorAiState::Idle, Action::Wait);
                     }
 
                     // move towards investigation position
@@ -339,12 +339,12 @@ impl Actor {
                     if let Some(path) = path {
                         if !path.is_empty() {
                             let next_position = path[0].clone();
-                            return (ActorState::InvestigatingPosition(target_position.clone()), Action::MoveTo(next_position));
+                            return (ActorAiState::InvestigatingPosition(target_position.clone()), Action::MoveTo(next_position));
                         }
                     }
 
                     // cannot reach position, go idle
-                    return (ActorState::Idle, Action::Wait);
+                    return (ActorAiState::Idle, Action::Wait);
                 }
             }
         }

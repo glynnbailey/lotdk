@@ -1,4 +1,4 @@
-// #![allow(dead_code, unused)]
+// #![allow(dead_code)]
 
 mod actor;
 mod actor_manager;
@@ -14,9 +14,11 @@ mod playing;
 mod position;
 mod shadowcast;
 mod terminalguard;
+mod character_creation_menu;
 
 pub enum GameState {
     MainMenu(main_menu::MainMenu),
+    CharacterCreationMenu(character_creation_menu::CharacterCreationMenu),
     Playing(playing::Playing),
     Quit,
 }
@@ -46,12 +48,13 @@ impl GameData {
 fn main() -> std::io::Result<()> {
     let _term = terminalguard::TerminalGuard::new()?;
     let mut game_data = GameData::new();
-    let mut game_state = GameState::MainMenu(main_menu::MainMenu::new());
+    let mut game_state = Some(GameState::MainMenu(main_menu::MainMenu::new()));
 
     loop {
         // draw
-        match game_state {
+        match game_state.as_ref().unwrap() {
             GameState::MainMenu(main_menu) => main_menu.draw()?,
+            GameState::CharacterCreationMenu(character_creation_menu) => character_creation_menu.draw()?,
             GameState::Playing(playing) => playing.draw(&game_data)?,
             GameState::Quit => break,
         }
@@ -60,11 +63,12 @@ fn main() -> std::io::Result<()> {
         game_data.input.update()?;
 
         // update
-        game_state = match game_state {
+        game_state = Some(match game_state.take().unwrap() {
             GameState::MainMenu(main_menu) => main_menu.update(&mut game_data),
+            GameState::CharacterCreationMenu(character_creation_menu) => character_creation_menu.update(&mut game_data),
             GameState::Playing(playing) => playing.update(&mut game_data),
             GameState::Quit => GameState::Quit,
-        };
+        });
     }
 
     Ok(())

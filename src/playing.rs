@@ -11,6 +11,10 @@ use std::io::Write;
 pub struct Playing;
 
 impl Playing {
+    pub fn new() -> Self {
+        Self
+    }
+
     pub fn update(self, game_data: &mut GameData) -> GameState {
         // State changes
         match game_data.input.last_key() {

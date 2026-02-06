@@ -1,4 +1,4 @@
-use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, map_manager::MapManager, playing::Playing, position::Position};
+use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, character_creation_menu::CharacterCreationMenu, map_manager::MapManager, position::Position};
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
@@ -49,7 +49,7 @@ impl MainMenu {
 
                     game_data.map.update_visibility(player_position);
 
-                    return GameState::Playing(Playing);
+                    return GameState::CharacterCreationMenu(CharacterCreationMenu::new());
                 }
                 1 => return GameState::Quit,
                 _ => {}
