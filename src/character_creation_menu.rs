@@ -1,6 +1,12 @@
-use std::io::Write;
-use crossterm::{QueueableCommand, cursor::MoveTo, event::KeyCode, style::Print, terminal::{Clear, ClearType}};
 use crate::{GameData, GameState, main_menu::MainMenu, playing::Playing};
+use crossterm::{
+    QueueableCommand,
+    cursor::MoveTo,
+    event::KeyCode,
+    style::Print,
+    terminal::{Clear, ClearType},
+};
+use std::io::Write;
 
 // ActorKind (race) > class? > stats > name > confirm
 
@@ -9,7 +15,6 @@ pub struct CharacterCreationMenu {
     // step: u8,
 
     // actor_kind: String,
-    
 }
 
 impl CharacterCreationMenu {
@@ -24,7 +29,7 @@ impl CharacterCreationMenu {
         match game_data.input.last_key() {
             KeyCode::Esc => return GameState::MainMenu(MainMenu::new()),
             KeyCode::Enter => return GameState::Playing(Playing::new()),
-            _ => GameState::CharacterCreationMenu(self)
+            _ => GameState::CharacterCreationMenu(self),
         }
     }
 

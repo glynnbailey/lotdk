@@ -83,8 +83,15 @@ pub struct ActorKind {
     pub color: Color,
     pub faction: String,
 
-    pub base_health: i32,
-    pub base_speed: u32,
+    pub health: i32,
+    pub speed: u32,
+
+    #[serde(default = "default_true")]
+    pub spawnable: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -104,10 +111,7 @@ pub enum ItemType {
     #[serde(rename = "armor")]
     Armor { defense: i32, slot: ArmorSlot },
     #[serde(rename = "consumable")]
-    Consumable {
-        effect: ConsumableEffect,
-        uses: Option<i32>, // None for infinite uses
-    },
+    Consumable { effect: ConsumableEffect },
     #[serde(rename = "misc")]
     Miscellaneous { stackable: bool },
 }

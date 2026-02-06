@@ -3,6 +3,7 @@
 mod actor;
 mod actor_manager;
 mod assets;
+mod character_creation_menu;
 mod consts;
 mod debug;
 mod input;
@@ -14,7 +15,6 @@ mod playing;
 mod position;
 mod shadowcast;
 mod terminalguard;
-mod character_creation_menu;
 
 pub enum GameState {
     MainMenu(main_menu::MainMenu),

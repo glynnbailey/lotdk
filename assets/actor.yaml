@@ -6,8 +6,9 @@
   glyph: '@'
   color: white
   faction: human
-  base_health: 100
-  base_speed: 100
+  health: 100
+  speed: 100
+  spawnable: false
 
 - kind: actor
   id: goblin
@@ -15,5 +16,5 @@
   glyph: 'g'
   color: green
   faction: goblin
-  base_health: 20
-  base_speed: 80
+  health: 20
+  speed: 80

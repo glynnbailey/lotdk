@@ -12,14 +12,10 @@ use rand::seq::SliceRandom;
 
 pub struct Actor {
     kind_id: String,
-    name: Option<String>,
-    faction: Option<String>, // overwrites the actor_kind base faction
+    character_stats: Option<CharacterStats>,
 
     position: Position,
     health: i32,
-    inventory: Inventory,
-    equipment: Equipment,
-
     ai_state: ActorAiState,
 }
 
@@ -31,17 +27,19 @@ pub enum ActorAiState {
 }
 
 impl Actor {
-    pub fn new(kind_id: String, name: Option<String>, faction: Option<String>, position: Position) -> Self {
+    fn character_stats_mut(&mut self) -> Result<&mut CharacterStats, String> {
+        self.character_stats.as_mut().ok_or_else(|| "Actor has no character stats".to_string())
+    }
+
+    pub fn new(kind_id: String, character_stats: Option<CharacterStats>, position: Position) -> Self {
         let kind = ASSETS.actor_kinds.iter().find(|k| k.id == kind_id).unwrap();
 
         Self {
             kind_id,
-            name,
-            faction,
+            character_stats,
+
             position,
-            health: kind.base_health,
-            inventory: Inventory::new(),
-            equipment: Equipment::new(),
+            health: kind.health,
             ai_state: ActorAiState::Idle,
         }
     }
@@ -61,12 +59,12 @@ impl Actor {
 
     pub fn max_health(&self) -> i32 {
         let kind = ASSETS.actor_kinds.iter().find(|k| k.id == self.kind_id).unwrap();
-        kind.base_health
+        kind.health
     }
 
     pub fn speed(&self) -> u32 {
         let kind = ASSETS.actor_kinds.iter().find(|k| k.id == self.kind_id).unwrap();
-        kind.base_speed
+        kind.speed
     }
 
     pub fn set_position(&mut self, position: Position) {
@@ -88,34 +86,51 @@ impl Actor {
     }
 
     // Inventory methods
-    pub fn inventory(&self) -> &Inventory {
-        &self.inventory
+    pub fn inventory(&self) -> Option<&Inventory> {
+        match self.character_stats.as_ref() {
+            Some(stats) => Some(&stats.inventory),
+            None => None,
+        }
     }
 
-    pub fn inventory_mut(&mut self) -> &mut Inventory {
-        &mut self.inventory
+    pub fn inventory_mut(&mut self) -> Option<&mut Inventory> {
+        match self.character_stats.as_mut() {
+            Some(stats) => Some(&mut stats.inventory),
+            None => None,
+        }
     }
 
-    pub fn add_item(&mut self, item_id: String, quantity: i32) {
-        self.inventory.add_item(item_id, quantity);
+    pub fn add_item(&mut self, item_id: String, quantity: i32) -> Result<(), String> {
+        let inventory = self.inventory_mut().ok_or_else(|| "Actor has no inventory".to_string())?;
+        inventory.add_item(item_id, quantity);
+        Ok(())
     }
 
-    pub fn remove_item(&mut self, item_id: &str, quantity: i32) -> bool {
-        self.inventory.remove_item(item_id, quantity)
+    pub fn remove_item(&mut self, item_id: &str, quantity: i32) -> Result<bool, String> {
+        let inventory = self.inventory_mut().ok_or_else(|| "Actor has no inventory".to_string())?;
+        Ok(inventory.remove_item(item_id, quantity))
     }
 
     // Equipment methods
-    pub fn equipment(&self) -> &Equipment {
-        &self.equipment
+    pub fn equipment(&self) -> Option<&Equipment> {
+        match self.character_stats.as_ref() {
+            Some(stats) => Some(&stats.equipment),
+            None => None,
+        }
     }
 
-    pub fn equipment_mut(&mut self) -> &mut Equipment {
-        &mut self.equipment
+    pub fn equipment_mut(&mut self) -> Option<&mut Equipment> {
+        match self.character_stats.as_mut() {
+            Some(stats) => Some(&mut stats.equipment),
+            None => None,
+        }
     }
 
     pub fn equip_item_from_inventory(&mut self, item_id: &str) -> Result<(), String> {
+        let stats = self.character_stats_mut()?;
+
         // Check if item is in inventory and remove it
-        if !self.inventory.remove_item(item_id, 1) {
+        if !stats.inventory.remove_item(item_id, 1) {
             return Err("Item not in inventory".to_string());
         }
 
@@ -123,30 +138,33 @@ impl Actor {
         let item_kind = ASSETS.item_kinds.iter().find(|kind| kind.id == item_id).ok_or("Unknown item type")?;
 
         // Try to equip the item
-        match self.equipment.equip_item(item_kind) {
+        match stats.equipment.equip_item(item_kind) {
             Ok(old_item) => {
                 // Add old item back to inventory if there was one
                 if let Some(old_item_id) = old_item {
-                    self.inventory.add_item(old_item_id, 1);
+                    stats.inventory.add_item(old_item_id, 1);
                 }
                 Ok(())
             }
             Err(err) => {
                 // Equipping failed, put the item back in inventory
-                self.inventory.add_item(item_id.to_string(), 1);
+                stats.inventory.add_item(item_id.to_string(), 1);
                 Err(err)
             }
         }
     }
 
     pub fn equip_item(&mut self, item_kind: &ItemKind) -> Result<Option<String>, String> {
-        self.equipment.equip_item(item_kind)
+        let stats = self.character_stats_mut()?;
+        stats.equipment.equip_item(item_kind)
     }
 
     // Consumable item usage
     pub fn use_consumable(&mut self, item_id: &str) -> Result<String, String> {
+        let stats = self.character_stats_mut()?;
+
         // Check if item is in inventory
-        if !self.inventory.has_item(item_id) {
+        if !stats.inventory.has_item(item_id) {
             return Err("Item not in inventory".to_string());
         }
 
@@ -154,20 +172,13 @@ impl Actor {
         let item_kind = ASSETS.item_kinds.iter().find(|kind| kind.id == item_id).ok_or("Unknown item type")?;
 
         // Check if item is consumable
-        let (effect, uses) = match &item_kind.item_type {
-            ItemType::Consumable { effect, uses } => (effect, uses),
+        let effect = match &item_kind.item_type {
+            ItemType::Consumable { effect } => effect,
             _ => return Err("Item is not consumable".to_string()),
         };
 
         // Apply the effect
         let result_message = self.apply_consumable_effect(effect)?;
-
-        // Remove item from inventory if it has limited uses
-        if uses.is_some() {
-            if !self.inventory.remove_item(item_id, 1) {
-                return Err("Failed to consume item".to_string());
-            }
-        }
 
         Ok(result_message)
     }
@@ -192,32 +203,34 @@ impl Actor {
     }
 
     pub fn unequip_armor_slot(&mut self, slot: &ArmorSlot) -> Option<String> {
-        if let Some(item_id) = self.equipment.unequip_slot(slot) {
-            self.inventory.add_item(item_id.clone(), 1);
-            Some(item_id)
-        } else {
-            None
+        let stats = self.character_stats_mut().ok()?;
+        if let Some(item_id) = stats.equipment.unequip_slot(slot) {
+            stats.inventory.add_item(item_id.clone(), 1);
+            return Some(item_id);
         }
+        None
     }
 
     pub fn unequip_weapon(&mut self) -> Option<String> {
-        if let Some(item_id) = self.equipment.unequip_weapon() {
-            self.inventory.add_item(item_id.clone(), 1);
-            Some(item_id)
-        } else {
-            None
+        let stats = self.character_stats_mut().ok()?;
+        if let Some(item_id) = stats.equipment.unequip_weapon() {
+            stats.inventory.add_item(item_id.clone(), 1);
+            return Some(item_id);
         }
+        None
     }
 
     // Calculate total defense from equipped armor
     pub fn total_defense(&self) -> i32 {
         let mut defense = 0;
 
-        for (_, equipped_item) in self.equipment.iter_slots() {
-            if let Some(item_id) = equipped_item {
-                if let Some(item_kind) = ASSETS.item_kinds.iter().find(|k| &k.id == item_id) {
-                    if let ItemType::Armor { defense: item_defense, .. } = &item_kind.item_type {
-                        defense += item_defense;
+        if let Some(stats) = self.character_stats.as_ref() {
+            for (_, equipped_item) in stats.equipment.iter_slots() {
+                if let Some(item_id) = equipped_item {
+                    if let Some(item_kind) = ASSETS.item_kinds.iter().find(|k| &k.id == item_id) {
+                        if let ItemType::Armor { defense: item_defense, .. } = &item_kind.item_type {
+                            defense += item_defense;
+                        }
                     }
                 }
             }
@@ -227,10 +240,12 @@ impl Actor {
     }
 
     pub fn weapon_damage(&self) -> i32 {
-        if let Some(weapon_id) = &self.equipment.weapon {
-            if let Some(weapon_kind) = ASSETS.item_kinds.iter().find(|k| &k.id == weapon_id) {
-                if let ItemType::Weapon { damage, .. } = &weapon_kind.item_type {
-                    return *damage;
+        if let Some(stats) = self.character_stats.as_ref() {
+            if let Some(weapon_id) = &stats.equipment.weapon {
+                if let Some(weapon_kind) = ASSETS.item_kinds.iter().find(|k| &k.id == weapon_id) {
+                    if let ItemType::Weapon { damage, .. } = &weapon_kind.item_type {
+                        return *damage;
+                    }
                 }
             }
         }
@@ -351,17 +366,42 @@ impl Actor {
     }
 
     pub fn is_friendly_towards(&self, other: &Actor) -> bool {
-        let self_faction = match &self.faction {
-            Some(faction) => faction.clone(),
-            None => ASSETS.actor_kinds.iter().find(|kind| kind.id == self.kind_id).map(|kind| kind.faction.clone()).unwrap_or_default(),
+        let self_faction = match self.character_stats.as_ref() {
+            Some(stats) => stats.faction.clone(),
+            None => match ASSETS.actor_kinds.iter().find(|kind| kind.id == self.kind_id) {
+                Some(kind) => kind.faction.clone(),
+                None => String::new(),
+            },
         };
 
-        let other_faction = match &other.faction {
-            Some(faction) => faction.clone(),
-            None => ASSETS.actor_kinds.iter().find(|kind| kind.id == other.kind_id).map(|kind| kind.faction.clone()).unwrap_or_default(),
+        let other_faction = match other.character_stats.as_ref() {
+            Some(stats) => stats.faction.clone(),
+            None => match ASSETS.actor_kinds.iter().find(|kind| kind.id == other.kind_id) {
+                Some(kind) => kind.faction.clone(),
+                None => String::new(),
+            },
         };
 
         self_faction == other_faction
+    }
+}
+
+pub struct CharacterStats {
+    #[allow(dead_code)]
+    name: String,
+    inventory: Inventory,
+    equipment: Equipment,
+    faction: String,
+}
+
+impl CharacterStats {
+    pub fn new(name: String, faction: String) -> Self {
+        Self {
+            name,
+            inventory: Inventory::new(),
+            equipment: Equipment::new(),
+            faction,
+        }
     }
 }
 

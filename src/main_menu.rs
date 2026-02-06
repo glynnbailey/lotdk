@@ -1,4 +1,11 @@
-use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, character_creation_menu::CharacterCreationMenu, map_manager::MapManager, position::Position};
+use crate::{
+    GameData, GameState,
+    actor::{Actor, CharacterStats},
+    actor_manager::ActorManager,
+    character_creation_menu::CharacterCreationMenu,
+    map_manager::MapManager,
+    position::Position,
+};
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
@@ -8,8 +15,9 @@ use crossterm::{
 };
 use std::io::Write;
 
-const MENU_ITEMS: [&str; 2] = ["Start Game", "Quit"];
+const MENU_ITEMS: [&str; 3] = ["New Game", "Load Game", "Quit"];
 
+const TITLE_PREFIX: &str = "Lair of the";
 const TITLE: [&str; 4] = [
     "▗▄▄▄ ▗▄▄▄▖▗▖  ▗▖ ▗▄▖ ▗▖  ▗▖    ▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖",
     "▐▌  █▐▌   ▐▛▚▞▜▌▐▌ ▐▌▐▛▚▖▐▌    ▐▌▗▞▘  █  ▐▛▚▖▐▌▐▌   ",
@@ -43,7 +51,9 @@ impl MainMenu {
                     game_data.map.build_floor();
 
                     let player_position = Position { x: 10, y: 10 };
-                    let player_actor = Actor::new("human".to_string(), Some("Player".to_string()), None, player_position);
+                    let player_character_stats = CharacterStats::new("Hero".to_string(), "player".to_string());
+
+                    let player_actor = Actor::new("human".to_string(), Some(player_character_stats), player_position);
                     let actor_id = game_data.actors.add_actor(player_actor);
                     game_data.map.set_actor(player_position, actor_id);
 
@@ -51,7 +61,8 @@ impl MainMenu {
 
                     return GameState::CharacterCreationMenu(CharacterCreationMenu::new());
                 }
-                1 => return GameState::Quit,
+                1 => {} // TODO load game not yet implemented
+                2 => return GameState::Quit,
                 _ => {}
             },
             KeyCode::Esc => return GameState::Quit,
@@ -63,20 +74,21 @@ impl MainMenu {
 
     pub fn draw(&self) -> std::io::Result<()> {
         let mut stdout = std::io::stdout();
+        let (cols, _) = crossterm::terminal::size()?;
         stdout.queue(Clear(ClearType::All))?;
 
-        stdout.queue(MoveTo(0, 0))?;
-        stdout.queue(PrintStyledContent(style("Lair of the").with(Color::Magenta).attribute(Attribute::Bold)))?;
+        
+        let prefix_x = center_x(TITLE_PREFIX, cols);
+        stdout.queue(MoveTo(prefix_x, 4))?;
+        stdout.queue(PrintStyledContent(style(TITLE_PREFIX).with(Color::Magenta).attribute(Attribute::Bold)))?;
         for (i, line) in TITLE.iter().enumerate() {
-            stdout.queue(MoveTo(0, 1 + i as u16))?;
+            let line_x = center_x(line, cols);
+            stdout.queue(MoveTo(line_x, 5 + i as u16))?;
             stdout.queue(PrintStyledContent(style(*line).with(Color::Red).attribute(Attribute::Bold)))?;
         }
 
-        stdout.queue(MoveTo(0, 7))?;
-        stdout.queue(Print("Main Menu"))?;
-
         for (i, item) in MENU_ITEMS.iter().enumerate() {
-            stdout.queue(MoveTo(0, 9 + i as u16))?;
+            stdout.queue(MoveTo(20, 12 + i as u16))?;
             if i as u8 == self.cursor {
                 stdout.queue(PrintStyledContent(style(item).with(Color::Red)))?;
             } else {
@@ -87,4 +99,9 @@ impl MainMenu {
         stdout.flush()?;
         Ok(())
     }
+}
+
+fn center_x(text: &str, width: u16) -> u16 {
+    let text_len = text.chars().count() as u16;
+    width.saturating_sub(text_len) / 2
 }
