@@ -1,9 +1,9 @@
-use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, input::InputState, map_manager::MapManager, playing::Playing, position::Position};
+use crate::{GameData, GameState, actor::Actor, actor_manager::ActorManager, map_manager::MapManager, playing::Playing, position::Position};
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
     event::KeyCode,
-    style::{Attribute, Color, Print, PrintStyledContent, StyledContent, Stylize, style},
+    style::{Attribute, Color, Print, PrintStyledContent, Stylize, style},
     terminal::{Clear, ClearType},
 };
 use std::io::Write;
@@ -61,7 +61,7 @@ impl MainMenu {
         GameState::MainMenu(self)
     }
 
-    pub fn draw(&self, game_data: &GameData) -> std::io::Result<()> {
+    pub fn draw(&self) -> std::io::Result<()> {
         let mut stdout = std::io::stdout();
         stdout.queue(Clear(ClearType::All))?;
 

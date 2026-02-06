@@ -25,7 +25,6 @@ where
     S: Serializer,
 {
     let color_str = match color {
-        _ => return Err(serde::ser::Error::custom("Unsupported color")),
         Color::Reset => panic!("Reset color not supported in serialization"),
         Color::Black => "black",
         Color::DarkGrey => "dark_grey",

@@ -1,4 +1,4 @@
-#![allow(dead_code, unused)]
+// #![allow(dead_code, unused)]
 
 mod actor;
 mod actor_manager;
@@ -14,15 +14,6 @@ mod playing;
 mod position;
 mod shadowcast;
 mod terminalguard;
-
-use crossterm::{
-    QueueableCommand,
-    cursor::MoveTo,
-    event::KeyCode,
-    style::Print,
-    terminal::{Clear, ClearType},
-};
-use std::io::Write;
 
 pub enum GameState {
     MainMenu(main_menu::MainMenu),
@@ -60,7 +51,7 @@ fn main() -> std::io::Result<()> {
     loop {
         // draw
         match game_state {
-            GameState::MainMenu(main_menu) => main_menu.draw(&game_data)?,
+            GameState::MainMenu(main_menu) => main_menu.draw()?,
             GameState::Playing(playing) => playing.draw(&game_data)?,
             GameState::Quit => break,
         }

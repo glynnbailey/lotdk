@@ -10,7 +10,7 @@ pub struct TerminalGuard;
 
 impl TerminalGuard {
     pub fn new() -> std::io::Result<Self> {
-        let original_hook = panic::take_hook();
+        // let original_hook = panic::take_hook();
         panic::set_hook(Box::new(move |panic_info| {
             Self::cleanup();
             eprintln!("{}", panic_info);

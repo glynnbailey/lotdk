@@ -1,10 +1,9 @@
-use crate::{GameData, GameState, input::InputState, main_menu::MainMenu, position::Position};
+use crate::{GameData, GameState, actor::ApplyDamageResult, main_menu::MainMenu, position::Position};
 use crossterm::{
     QueueableCommand,
     cursor::MoveTo,
     event::KeyCode,
-    style::{Print, PrintStyledContent, StyledContent, Stylize, style},
-    terminal::{Clear, ClearType},
+    style::{Print, PrintStyledContent, Stylize, style},
 };
 use std::io::Write;
 
@@ -73,17 +72,26 @@ impl Playing {
             }
             Action::MoveTo(destination_position) => {
                 if let Some(actor) = game_data.actors.get_actor_mut(actor_id) {
-                    let actor = game_data.actors.get_actor_mut(actor_id).unwrap();
                     let current_position = actor.position();
                     game_data.map.move_actor(current_position, destination_position);
                     actor.set_position(destination_position);
                 }
             }
-            Action::Interact(target_pos) => {
-                // Interaction logic here
-            }
-            Action::MeleeAttack(target_id) => {
-                // Melee attack logic here
+            Action::Interact(position) => game_data.map.get_tile_mut(position).unwrap().interact(),
+            Action::MeleeAttack(target_actor_id) => {
+                let attack_roll = game_data.actors.get_actor(actor_id).unwrap().melee_attack_roll();
+                let result = game_data.actors.get_actor_mut(target_actor_id).unwrap().apply_damage(attack_roll);
+                match result {
+                    ApplyDamageResult::None => {}
+                    ApplyDamageResult::ActorDied => {
+                        let target_actor_position = game_data.actors.get_actor_mut(target_actor_id).unwrap().position();
+                        game_data.actors.remove_actor(target_actor_id);
+                        game_data.map.remove_actor(target_actor_position);
+                        // TODO player death to game over screen
+                    }
+                }
+
+                println!("Actor {} attacked Actor {} for {} damage", actor_id, target_actor_id, attack_roll);
             }
         }
     }

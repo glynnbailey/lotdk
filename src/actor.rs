@@ -1,7 +1,6 @@
 use crate::{
     actor_manager::ActorManager,
     assets::{ASSETS, ArmorSlot, ConsumableEffect, ItemKind, ItemType},
-    consts::*,
     inventory::{Equipment, Inventory},
     map_manager::MapManager,
     pathfinding::a_star,
@@ -227,7 +226,6 @@ impl Actor {
         defense
     }
 
-    // Calculate weapon damage
     pub fn weapon_damage(&self) -> i32 {
         if let Some(weapon_id) = &self.equipment.weapon {
             if let Some(weapon_kind) = ASSETS.item_kinds.iter().find(|k| &k.id == weapon_id) {

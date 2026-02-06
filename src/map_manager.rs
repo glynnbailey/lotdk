@@ -1,6 +1,6 @@
 use crossterm::style::Color;
 
-use crate::{actor_manager::ActorManager, consts::DUNGEON_SIZE, consts::*, position::Position};
+use crate::{consts::DUNGEON_SIZE, position::Position};
 
 pub struct MapManager {
     tiles: Vec<Tile>,
